@@ -93,17 +93,19 @@ func execute(command string, args []string) {
 	Current_state.Last = run
 }
 
-func Create(schedule string, command string, args []string) (cr *cron.Cron, wgr *sync.WaitGroup) {
+func Create(schedule string, command string, args []string) (cr *cron.Cron, wgr *sync.WaitGroup, err error) {
+	parser := cron.NewParser(
+		cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+	)
+	
+	// Validate schedule
+	if _, err := parser.Parse(schedule); err != nil {
+		return nil, nil, err
+	}
 
 	wg := &sync.WaitGroup{}
 
-	c := cron.New(
-		cron.WithParser(
-			cron.NewParser(
-				cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
-			),
-		),
-	)
+	c := cron.New(cron.WithParser(parser))
 	Current_state = CurrentState{map[string]*LastRun{}, &LastRun{}, schedule}
 	log.Println("new cron:", schedule)
 
@@ -113,7 +115,7 @@ func Create(schedule string, command string, args []string) (cr *cron.Cron, wgr 
 		wg.Done()
 	})
 
-	return c, wg
+	return c, wg, nil
 }
 
 func Start(c *cron.Cron) {

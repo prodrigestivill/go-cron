@@ -33,7 +33,10 @@ func main() {
 	}
 	log.Println("Running version:", version)
 
-	c, wg := gocron.Create(*schedule, execArgs[0], execArgs[1:len(execArgs)])
+	c, wg, err := gocron.Create(*schedule, execArgs[0], execArgs[1:len(execArgs)])
+	if err != nil {
+		log.Fatalf("Invalid schedule: %v", err)
+	}
 
 	go gocron.Start(c)
 	if *port != "0" {
